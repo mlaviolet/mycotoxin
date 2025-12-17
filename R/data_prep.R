@@ -7,30 +7,43 @@ library(tidyverse)
 library(readxl)
 library(here)
 
+# FIXED
 # need dates in YYYY-MM-DD
 # column C is blank
 # still have columns beginning with numbers: "15_Ace", "3_Ace";
 #   suggest "Ace_15" and "Ace_3"--will change to full names later
-# "corn flour" file--all names alike; in general, how to treat duplicated names?
-
-# linking table of food and classification
 # only need "raw data" file
 
-df <- read_xlsx("data-raw/Toddler study raw data 2025-12-05.xlsx",
-                na = c("nd", "np", "dn"),
-                # cells E4 and M40 are apparently typos
-                col_types = c(rep("text", 3), rep("numeric", 34)),
-                n_max = 119) |> 
+# QUESTIONS
+# "corn flour" file--all names alike; in general, how to treat duplicated names?
+# Coconut_Flour	S251511351-237971 *2 (why the "*2"?)
+# in raw data spreadsheet cells E4 and M40 are apparently typos, confirm?
+#   rows 25 and 29 have duplicate ID S250551125-223922
+
+# linking table of food and classification
+products <- read_xlsx("data-raw/product-key.xlsx")
+
+test_data <- read_xlsx("data-raw/Toddler study raw data 2025-12-05.xlsx",
+                       na = c("nd", "np", "dn"),
+                       # cells E4 and M40 are apparently typos
+                       col_types = c(rep("text", 3), rep("numeric", 34)),
+                       n_max = 119) |> 
   select(- `...3`) |> 
   rename(Ace_15 = `15_Ace`, Ace_3 = `3_Ace`) |> 
   mutate(across(everything(), ~ replace_na(., 0)))
+
+x <- inner_join(test_data, products, by = "Number")
+  
 
 toxins <- read_xlsx("data-raw/2025-12-05 data legend.xlsx") |> 
   mutate(Abbreviation = str_replace(Abbreviation, "15_Ace", "Ace_15"),
          Abbreviation = str_replace(Abbreviation, "3_Ace", "Ace_3"))
 
-df_long <- df |> 
-  pivot_longer(cols = 3:36, names_to = "toxin", values_to = "ug_kg")
+
+
+
+
+
 
 
 # # list of files to import
