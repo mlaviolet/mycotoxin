@@ -16,34 +16,44 @@ library(here)
 
 # QUESTIONS
 # "corn flour" file--all names alike; in general, how to treat duplicated names?
-# Coconut_Flour	S251511351-237971 *2 (why the "*2"?)
+# Coconut_Flour	S251511351-237971 *2 (why the "*2"?) FIXED
 # in raw data spreadsheet cells E4 and M40 are apparently typos, confirm?
-#   rows 25 and 29 have duplicate ID S250551125-223922
+#   rows 25 and 29 have duplicate ID S250551125-223922 FIXED
 
 # linking table of food and classification
-products <- read_xlsx("data-raw/product-key.xlsx")
+products <- read_xlsx("data-raw/product-key.xlsx") |> 
+  # cleanup
+  mutate(Number = str_remove(Number, " \\*2")) |> 
+  filter(Food_tested != "Organic_fruit_and_veggie_bars")
 
+# import data from Excel file
 test_data <- read_xlsx("data-raw/Toddler study raw data 2025-12-05.xlsx",
                        na = c("nd", "np", "dn"),
                        # cells E4 and M40 are apparently typos
                        col_types = c(rep("text", 3), rep("numeric", 34)),
                        n_max = 119) |> 
+  # delete empty column
   select(- `...3`) |> 
+  # change names to syntactic
   rename(Ace_15 = `15_Ace`, Ace_3 = `3_Ace`) |> 
-  mutate(across(everything(), ~ replace_na(., 0)))
+  # change NA's to 0 (no toxin detected)
+  mutate(across(everything(), ~ replace_na(., 0))) |>
+  # remove duplicated sample
+  filter(Food_tested != "Organic_fruit_and_veggie_bars") |> 
+  # remove extraneous characters from sample ID
+  mutate(Number = str_remove(Number, " \\*2")) |> 
+  # tidy to long format
+  pivot_longer(cols = 3:36, names_to = "toxin", values_to = "ug_kg") |> 
+  # join with table of food categories
+  inner_join(products, by = c("Number", "Food_tested")) |> 
+  # JOIN WITH TOXIN CATEGORY WHEN AVAILABLE
+  relocate(Number, Food_type, Food_tested) 
 
-x <- inner_join(test_data, products, by = "Number")
-  
-
+# OK TO HERE --------------------------------------------------------------
+# full name of toxin for reporting
 toxins <- read_xlsx("data-raw/2025-12-05 data legend.xlsx") |> 
   mutate(Abbreviation = str_replace(Abbreviation, "15_Ace", "Ace_15"),
          Abbreviation = str_replace(Abbreviation, "3_Ace", "Ace_3"))
-
-
-
-
-
-
 
 
 # # list of files to import
