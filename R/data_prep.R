@@ -4,8 +4,9 @@
 # how to handle foods with same labels?
 
 library(tidyverse)
-library(readxl)
 library(here)
+library(readxl)
+library(writexl)
 
 # FIXED
 # need dates in YYYY-MM-DD
@@ -23,11 +24,11 @@ library(here)
 # linking table of food and classification
 products <- read_xlsx("data-raw/product-key.xlsx") |> 
   # cleanup
-  mutate(Number = str_remove(Number, " \\*2")) |> 
+  mutate(ID = str_remove(ID, " \\*2")) |> 
   filter(Food_tested != "Organic_fruit_and_veggie_bars")
 
 # import data from Excel file
-test_data <- read_xlsx("data-raw/Toddler study raw data 2025-12-05.xlsx",
+main_data <- read_xlsx("data-raw/Toddler study raw data 2025-12-05.xlsx",
                        na = c("nd", "np", "dn"),
                        # cells E4 and M40 are apparently typos
                        col_types = c(rep("text", 3), rep("numeric", 34)),
@@ -43,17 +44,23 @@ test_data <- read_xlsx("data-raw/Toddler study raw data 2025-12-05.xlsx",
   # remove extraneous characters from sample ID
   mutate(Number = str_remove(Number, " \\*2")) |> 
   # tidy to long format
-  pivot_longer(cols = 3:36, names_to = "toxin", values_to = "ug_kg") |> 
+  pivot_longer(cols = 3:36, names_to = "toxin", values_to = "amount") |> 
   # join with table of food categories
-  inner_join(products, by = c("Number", "Food_tested")) |> 
+  rename(ID = Number) |> 
+  inner_join(products, by = c("ID", "Food_tested")) |> 
   # JOIN WITH TOXIN CATEGORY WHEN AVAILABLE
-  relocate(Number, Food_type, Food_tested) 
+  relocate(ID, Food_type, Food_tested) 
 
-# OK TO HERE --------------------------------------------------------------
 # full name of toxin for reporting
 toxins <- read_xlsx("data-raw/2025-12-05 data legend.xlsx") |> 
   mutate(Abbreviation = str_replace(Abbreviation, "15_Ace", "Ace_15"),
          Abbreviation = str_replace(Abbreviation, "3_Ace", "Ace_3"))
+
+# save data in .Rdata and .xlsx formats
+save(main_data, products, toxins, file = here("data", "toxin_data.Rdata"))
+writexl::write_xlsx(main_data, here("data", "main_data.xlsx"))
+
+# OK TO HERE --------------------------------------------------------------
 
 
 # # list of files to import
