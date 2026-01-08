@@ -1,0 +1,105 @@
+---
+title: "Report"
+output: html_document
+date: "2026-01-08"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r, message=FALSE}
+library(here)
+library(tidyverse)
+library(broom)
+
+load(here("data", "toxin_data.Rdata"))
+```
+
+### Products with one or more toxins detected
+
+```{r}
+n <- main_data |> 
+  select(ID) |> 
+  distinct() |>
+  nrow()
+
+x <- main_data |> 
+  summarize(n = n(), n_toxins = sum(amount > 0), .by = ID) |> 
+  filter(n_toxins != 0) |> 
+  nrow()
+
+z <- epitools::binom.wilson(x, n) |> 
+  mutate(across(c(proportion, lower, upper), ~ 100 * .x)) |> 
+  rename(percent = proportion)
+
+```
+
+Products tested: `r z$n`
+
+Products with one or more toxins detected: `r z$x`
+
+Percent of products with one or more toxins detected: `r sprintf("%.1f",  z$percent)`; 95% CI = (`r sprintf("%.1f",  z$lower)`, `r sprintf("%.1f",  z$upper)`)
+
+This is the distribution of the number of detected toxins: 14 products had no detected toxins, 17 had 1, etc.
+
+```{r}
+# distribution of number of toxins
+number_toxins <- main_data |> 
+  summarize(n = n(), n_toxins = sum(amount > 0), .by = ID)
+# distribution of number of toxins
+number_toxins |> 
+  count(n_toxins)
+```
+
+Summary of the number of detected toxins:
+
+```{r}
+summary(number_toxins$n_toxins)
+```
+
+Number of detected toxins by type of product, excluding "Miscellaneous"; e.g., of the 25 breakfast cereal products, 21 had at least one detected toxin.
+
+```{r, message = FALSE}
+by_food_type <- number_toxins |> 
+  inner_join(products) |> 
+  group_by(Food_type) |> 
+  summarize(n = n(), any_toxin = sum(n_toxins > 0)) |> 
+  mutate(no_toxin = n - any_toxin)
+  # mutate(pct = 100 * any_toxin / n)
+
+# Test for differences by type
+# make contingency table as matrix
+z1 <- by_food_type |> 
+  filter(Food_type != "Miscellaneous") |> 
+  select(any_toxin, no_toxin) |> 
+  as.matrix(dimnames = list(by_food_type$Food_type, names(by_food_type)))
+# row names not coming out for some reason; add manually
+rownames(z1) <- by_food_type$Food_type[-3]
+z1
+```
+
+A simulated chi-square test indicates that the proportions of products with at least one detected toxin are approximately equal across the six groups (P = 0.48).
+
+```{r}
+# chi-square approximation questionable, use simulated p-value
+chisq.test(z1, simulate.p.value = TRUE)
+```
+
+This is the number of occurrences of each toxin in the 118 products tested.
+
+```{r}
+toxin_tally <- main_data |> 
+  filter(amount > 0) |> 
+  count(toxin) |> 
+  arrange(-n)
+print(toxin_tally, n = Inf)
+```
+
+These 8 toxins were not detected in any product.
+
+```{r}
+# toxins not occurring in any product
+setdiff(unique(main_data$toxin), toxin_tally$toxin)
+```
+
