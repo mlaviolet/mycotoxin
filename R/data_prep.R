@@ -44,7 +44,7 @@ main_data <- read_xlsx("data-raw/Toddler study raw data 2025-12-05.xlsx",
   # remove extraneous characters from sample ID
   mutate(Number = str_remove(Number, " \\*2")) |> 
   # tidy to long format
-  pivot_longer(cols = 3:36, names_to = "toxin", values_to = "amount") |> 
+  pivot_longer(cols = 3:36, names_to = "toxin_abb", values_to = "amount") |> 
   # join with table of food categories
   rename(ID = Number) |> 
   inner_join(products, by = c("ID", "Food_tested")) |> 
@@ -55,9 +55,8 @@ main_data <- read_xlsx("data-raw/Toddler study raw data 2025-12-05.xlsx",
 toxins <- read_xlsx("data-raw/2026-01-15 data legend.xlsx") |> 
   mutate(Abbreviation = str_replace(Abbreviation, "15_Ace", "Ace_15"),
          Abbreviation = str_replace(Abbreviation, "3_Ace", "Ace_3")) |> 
-  select(-(3:4)) |> 
-  rename(type = `Mycotoxin Type`)
-
+  rename(toxin_abb = Abbreviation, toxin = Mycotoxin,
+         toxin_type = `Mycotoxin Type`)
 
 # save data in .Rdata and .xlsx formats
 save(main_data, products, toxins, file = here("data", "toxin_data.Rdata"))
