@@ -55,18 +55,21 @@ chisq.test(z, simulate.p.value = TRUE)
 # most prevalent toxins ---------------------------------------------------
 toxin_tally <- main_data |> 
   filter(amount > 0) |> 
-  count(toxin) |> 
+  count(toxin_abb) |> 
   arrange(-n)
 
 # toxins not occurring in any product
-setdiff(unique(main_data$toxin), toxin_tally$toxin)
+setdiff(unique(main_data$toxin_abb), toxin_tally$toxin_abb)
 
+# distribution of food types
 main_data |> 
   select(ID, Food_type) |> 
   distinct() |> 
   count(Food_type)
 
 # RESUME HERE -------------------------------------------------------------
+
+df <- main_data
 
 # most prevalent toxin by food type
 food_type_list <- main_data |> 
