@@ -52,9 +52,10 @@ main_data <- read_xlsx("data-raw/Toddler study raw data 2025-12-05.xlsx",
   relocate(ID, Food_type, Food_tested) 
 
 # full name of toxin for reporting
-toxins <- read_xlsx("data-raw/2025-12-05 data legend.xlsx") |> 
+toxins <- read_xlsx("data-raw/2026-01-15 data legend.xlsx") |> 
   mutate(Abbreviation = str_replace(Abbreviation, "15_Ace", "Ace_15"),
-         Abbreviation = str_replace(Abbreviation, "3_Ace", "Ace_3"))
+         Abbreviation = str_replace(Abbreviation, "3_Ace", "Ace_3")) |> 
+  select(-(3:4))
 
 # save data in .Rdata and .xlsx formats
 save(main_data, products, toxins, file = here("data", "toxin_data.Rdata"))
