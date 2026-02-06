@@ -69,14 +69,14 @@ main_data |>
 # RESUME HERE -------------------------------------------------------------
 
 # most prevalent toxin by food type
-main_data |> 
+food_type_list <- main_data |> 
   filter(amount > 0, Food_type != "Miscellaneous") |> 
   group_by(Food_type) |>
   count(toxin) |> 
   arrange(Food_type, -n) |> 
-  group_split() |> 
-  print(n = 5)
-  # ungroup() |> 
+  group_split() 
+
+walk(food_type_list, \(x) print(x, n = 5))
   
   
   
