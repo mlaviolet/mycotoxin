@@ -27,6 +27,13 @@ products <- read_xlsx("data-raw/product-key.xlsx") |>
   mutate(ID = str_remove(ID, " \\*2")) |> 
   filter(Food_tested != "Organic_fruit_and_veggie_bars")
 
+# full name of toxin for reporting, and type of toxin
+toxins <- read_xlsx("data-raw/2026-01-15 data legend.xlsx") |> 
+  mutate(Abbreviation = str_replace(Abbreviation, "15_Ace", "Ace_15"),
+         Abbreviation = str_replace(Abbreviation, "3_Ace", "Ace_3")) |> 
+  rename(toxin_abb = Abbreviation, toxin = Mycotoxin,
+         toxin_type = `Mycotoxin Type`)
+
 # import data from Excel file
 main_data <- read_xlsx("data-raw/Toddler study raw data 2025-12-05.xlsx",
                        na = c("nd", "np", "dn"),
@@ -59,16 +66,8 @@ main_data <- read_xlsx("data-raw/Toddler study raw data 2025-12-05.xlsx",
   rename(ID = Number) |> 
   inner_join(products, by = c("ID", "Food_tested")) |> 
   # JOIN WITH TOXIN CATEGORY WHEN AVAILABLE
-  relocate(ID, Food_type, Food_tested) 
-
-# full name of toxin for reporting, and type of toxin
-toxins <- read_xlsx("data-raw/2026-01-15 data legend.xlsx") |> 
-  mutate(Abbreviation = str_replace(Abbreviation, "15_Ace", "Ace_15"),
-         Abbreviation = str_replace(Abbreviation, "3_Ace", "Ace_3")) |> 
-  rename(toxin_abb = Abbreviation, toxin = Mycotoxin,
-         toxin_type = `Mycotoxin Type`)
-
-# JOIN WITH toxins to get types
+  inner_join(toxins, by = "toxin_abb") |> 
+  select(ID, Food_tested, toxin, amount, Food_type, toxin_abb, toxin_type) 
 
 # save data in .Rdata and .xlsx formats
 save(main_data, products, toxins, 
