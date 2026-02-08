@@ -1,4 +1,4 @@
-# script to test import
+# script to import and process data
 
 # questions:
 # how to handle foods with same labels?
@@ -37,6 +37,16 @@ main_data <- read_xlsx("data-raw/Toddler study raw data 2025-12-05.xlsx",
   select(- `...3`) |> 
   # change names to syntactic
   rename(Ace_15 = `15_Ace`, Ace_3 = `3_Ace`) |> 
+  # change names to match updated linking table of 2026-02-07
+  rename(# BETA = Beau,
+         `FUS-X` = FX,
+         NEO = NEOS,
+         ZEA = ZONE,
+         STC = Sterig,
+         GRI = GRIS,
+         `a-ZEA` = Alpha,
+         `b-ZEA` = Beta,
+         AOH =  ALT) |> 
   # change NA's to 0 (no toxin detected)
   mutate(across(everything(), ~ replace_na(., 0))) |>
   # remove duplicated sample
@@ -58,9 +68,15 @@ toxins <- read_xlsx("data-raw/2026-01-15 data legend.xlsx") |>
   rename(toxin_abb = Abbreviation, toxin = Mycotoxin,
          toxin_type = `Mycotoxin Type`)
 
+# JOIN WITH toxins to get types
+
 # save data in .Rdata and .xlsx formats
-save(main_data, products, toxins, file = here("data", "toxin_data.Rdata"))
-writexl::write_xlsx(main_data, here("data", "main_data.xlsx"))
+save(main_data, products, toxins, 
+     file = here("data", "toxin_data.Rdata"))
+writexl::write_xlsx(main_data, 
+                    here("data", 
+                         paste0("main_data-", as.character(today()), ".xlsx")
+                         ))
 
 # OK TO HERE --------------------------------------------------------------
 
