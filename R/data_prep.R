@@ -72,10 +72,11 @@ main_data <- read_xlsx("data-raw/Toddler study raw data 2025-12-05.xlsx",
 # save data in .Rdata and .xlsx formats
 save(main_data, products, toxins, 
      file = here("data", "toxin_data.Rdata"))
-writexl::write_xlsx(main_data, 
-                    here("data", 
-                         paste0("main_data-", as.character(today()), ".xlsx")
-                         ))
+writexl::write_xlsx(
+  main_data, 
+  here("data", 
+       paste0("working_data-", as.character(today()), ".xlsx")
+       ))
 
 # OK TO HERE --------------------------------------------------------------
 
