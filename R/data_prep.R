@@ -1,8 +1,5 @@
 # script to import and process data
 
-# questions:
-# how to handle foods with same labels?
-
 library(tidyverse)
 library(here)
 library(readxl)
