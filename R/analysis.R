@@ -67,9 +67,7 @@ main_data |>
   distinct() |> 
   count(Food_type)
 
-# RESUME HERE -------------------------------------------------------------
-
-df <- main_data
+# df <- main_data
 
 # most prevalent toxin by food type
 food_type_list <- main_data |> 
@@ -81,11 +79,13 @@ food_type_list <- main_data |>
 
 walk(food_type_list, \(x) print(x, n = 5))
   
+# PREVALENT TOXIN TYPES BY FOOD TYPE --------------------------------------  
+
+
   
-  
-  inner_join(products) |> 
-  summarize(n = n(), any_toxin = sum(n_toxins > 0)) |> 
-  mutate(no_toxin = n - any_toxin)
+  # inner_join(products) |> 
+  # summarize(n = n(), any_toxin = sum(n_toxins > 0)) |> 
+  # mutate(no_toxin = n - any_toxin)
 
 # main_data |> 
 #   group_by(ID, Food_type) |> 
