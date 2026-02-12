@@ -3,8 +3,20 @@
 library(here)
 library(tidyverse)
 library(broom)
+theme_set(theme_bw())
 
 load(here("data", "toxin_data.Rdata"))
+
+# # coerce toxin type and food groups to factors
+# main_data <- main_data |> 
+#   mutate(across(c(Food_type, toxin_type), factor)) |> 
+#   # change "Miscellanous" level to "Other"
+#   mutate(Food_type = fct_other(Food_type, drop = "Miscellaneous")) |> 
+#   mutate(toxin_type = fct_collapse(toxin_type,
+#     Trichothecene = c("Trichothecene Type A", "Trichothecene Type B"),
+#     Difuranocoumarin = c("Difuranocoumarin",
+#                          "Difuranocoumarin xanthone precursor to aflatoxin")
+#     ))
 
 # all products ------------------------------------------------------------
 
@@ -67,8 +79,6 @@ main_data |>
   distinct() |> 
   count(Food_type)
 
-# df <- main_data
-
 # most prevalent toxin by food type
 food_type_list <- main_data |> 
   filter(amount > 0, Food_type != "Miscellaneous") |> 
@@ -78,8 +88,47 @@ food_type_list <- main_data |>
   group_split() 
 
 walk(food_type_list, \(x) print(x, n = 5))
+
+# most prevalent toxin types
+toxin_grouped <- main_data |> 
+  mutate(toxin_type = factor(toxin_type)) |> 
+  filter_out(amount == 0) |> 
+  count(toxin_type, .drop = FALSE) |> 
+  # summarize(n = sum(n))
+  arrange(-n) |> 
+  mutate(pct = 100 * n / sum(n))
+
+# graph of toxin_types, collapsing less frequent
+# PUT IN DESCENDING ORDER OF BAR LENGTH
+main_data |> 
+  filter(amount > 0) |> 
+  mutate(
+    toxin_type = 
+      fct_collapse(
+        toxin_type,
+        Trichothecene = c("Trichothecene Type A", 
+                          "Trichothecene Type B"),
+        Difuranocoumarin = c("Difuranocoumarin",
+                             "Difuranocoumarin xanthone precursor to aflatoxin")
+             )) |> 
+  mutate(toxin_type = fct_lump_n(toxin_type, 5)) |> 
+  count(toxin_type) |> 
+  arrange(-n) |> 
+  ggplot(aes(x = reorder(toxin_type, n), y = n)) +
+  geom_col() + 
+  geom_text(aes(label = n), hjust = -0.5) + 
+  labs(y = "Number of occurences", x = "Toxin Group") +
+  coord_flip() 
   
-# PREVALENT TOXIN TYPES BY FOOD TYPE --------------------------------------  
+
+# OK TO HERE --------------------------------------------------------------
+
+# most prevalent toxin types by food type
+main_data |> 
+  filter_out(amount == 0) |> 
+  count(Food_type, toxin_type) |> 
+  arrange(-n) |> 
+  print(n = Inf)
 
 
   
