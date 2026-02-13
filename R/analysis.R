@@ -101,7 +101,9 @@ toxin_grouped <- main_data |>
 # graph of toxin_types, collapsing less frequent
 # PUT IN DESCENDING ORDER OF BAR LENGTH
 main_data |> 
+  # use cases where a toxin was detected
   filter(amount > 0) |> 
+  # collapse trichothecene and difuranocoumarin groups
   mutate(
     toxin_type = 
       fct_collapse(
@@ -111,13 +113,19 @@ main_data |>
         Difuranocoumarin = c("Difuranocoumarin",
                              "Difuranocoumarin xanthone precursor to aflatoxin")
              )) |> 
+  # keep top 5 groups and collapse others
   mutate(toxin_type = fct_lump_n(toxin_type, 5)) |> 
+  # put counts in decreasing order
   count(toxin_type) |> 
   arrange(-n) |> 
+  # set up horizontal bar graph--CAN THIS BE COMBINED WITH PREVIOUS LINE?
   ggplot(aes(x = reorder(toxin_type, n), y = n)) +
+  # bar graph
   geom_col() + 
+  # add counts as label
   geom_text(aes(label = n), hjust = -0.5) + 
-  labs(y = "Number of occurences", x = "Toxin Group") +
+  labs(y = "Number of occurences", x = "Toxin group") +
+  # make graph horizontal
   coord_flip() 
   
 
