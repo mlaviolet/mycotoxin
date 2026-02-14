@@ -3,7 +3,9 @@
 library(here)
 library(tidyverse)
 library(broom)
-theme_set(theme_bw())
+library(flextable)
+
+theme_set(theme_classic())
 
 load(here("data", "toxin_data.Rdata"))
 
@@ -98,8 +100,9 @@ toxin_grouped <- main_data |>
   arrange(-n) |> 
   mutate(pct = 100 * n / sum(n))
 
+# Graph of toxin types ----------------------------------------------------
+
 # graph of toxin_types, collapsing less frequent
-# PUT IN DESCENDING ORDER OF BAR LENGTH
 work_data <- main_data |> 
   # use cases where a toxin was detected
   filter(amount > 0) |> 
@@ -118,41 +121,63 @@ work_data <- main_data |>
   # make "Miscellaneous" food group "Other"
   mutate(Food_type = fct_other(Food_type, drop = "Miscellaneous"))
 
+# labels of groups with individual toxins
+toxin_grp_lbl <- rev(
+  c("Cyclic hexadepsipeptide\n(Beau, Enn_A, Enn_A1, Enn_B, Enn_B1)",
+    "Dibenzopyrone\n(AOH, AME)",
+    "Difuranocoumarin\n(AFB1, AFB2, AFG1, AFG2)",
+    "Polyketide\n(CIT, FB1, FB2, FB3, GRI)",
+    "Trichothecene\n(3_Ace, 15_Ace, DAS, DOM, DON,\nDON_3_Glu, FUS-X, HT_2, NEO, NIV, T2)",
+    "Other\n(\u03b1-ZEA, \u03b2-ZEA, CPA, OTA, Rocq, STC, ZEA)"))
+
+# \u03b1 is Unicode for lower-case alpha; \u03b2 is lower-case beta
+
 # put counts in decreasing order for graphing
 work_data |> 
   count(toxin_grp) |> 
-  arrange(-n) |> 
+  # arrange(-n) |> 
   # set up horizontal bar graph--CAN THIS BE COMBINED WITH PREVIOUS LINE?
   ggplot(aes(x = reorder(toxin_grp, n), y = n)) +
   # bar graph
-  geom_col() + 
+  geom_col(fill = "grey60") + 
   # add counts as labels on ends of bars
   geom_text(aes(label = n), hjust = -0.5) + 
-  labs(y = "Number of occurences", x = "Toxin group") +
-  ylim(0, 225) +
+  labs(y = "Number of occurrences (n = 4,012)", x = "Toxin group") +
+  ylim(0, 235) +
+  scale_x_discrete(labels = toxin_grp_lbl) + 
+  theme(axis.title.y = element_blank()) +
   # make graph horizontal
   coord_flip() 
-  
+ggsave(here("output", "graph_toxin.png"))
 
-# OK TO HERE --------------------------------------------------------------
-
-# most prevalent toxin types by food type
-work_data |> 
+# Table of toxin groups by food type --------------------------------------  
+x <- work_data |> 
   filter_out(amount == 0) |> 
   count(Food_type, toxin_grp) |> 
   arrange(-n) |> 
   print(n = Inf)
 
-xtabs(~ toxin_grp + Food_type, data = subset(work_data, amount > 0))
-  
-work_data |> 
-  filter_out(amount == 0) |> 
-  count(Food_type) |> 
-  arrange(-n) 
+ft <- xtabs(~ toxin_grp + Food_type, data = subset(work_data, amount > 0))|> 
+  epitools::table.margins() |> 
+  as_tibble(rownames = "Toxin") |> 
+  flextable::flextable()  |> 
+  add_header_row(values = "Food", colwidths = 9) |> 
+  align(i = 1, j = NULL, align = "center", part = "header")
+# https://rdrr.io/cran/flextable/man/align.html  
+# use save_as_docx() to save to Word  
+save_as_docx(ft, path = here("output", "table_food-by-toxin.docx"))
 
-  # inner_join(products) |> 
-  # summarize(n = n(), any_toxin = sum(n_toxins > 0)) |> 
-  # mutate(no_toxin = n - any_toxin)
+# OK TO HERE --------------------------------------------------------------
+
+x <- work_data |> 
+  filter_out(amount == 0) |> 
+  count(Food_type, toxin_grp, .drop = FALSE) |> 
+  arrange(-n) |> 
+  pivot_wider(names_from = Food_type, values_from = n)
+
+# inner_join(products) |> 
+# summarize(n = n(), any_toxin = sum(n_toxins > 0)) |> 
+# mutate(no_toxin = n - any_toxin)
 
 # main_data |> 
 #   group_by(ID, Food_type) |> 
