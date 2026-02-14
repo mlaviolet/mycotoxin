@@ -100,12 +100,12 @@ toxin_grouped <- main_data |>
 
 # graph of toxin_types, collapsing less frequent
 # PUT IN DESCENDING ORDER OF BAR LENGTH
-main_data |> 
+work_data <- main_data |> 
   # use cases where a toxin was detected
   filter(amount > 0) |> 
   # collapse trichothecene and difuranocoumarin groups
   mutate(
-    toxin_type = 
+    toxin_grp = 
       fct_collapse(
         toxin_type,
         Trichothecene = c("Trichothecene Type A", 
@@ -114,17 +114,22 @@ main_data |>
                              "Difuranocoumarin xanthone precursor to aflatoxin")
              )) |> 
   # keep top 5 groups and collapse others
-  mutate(toxin_type = fct_lump_n(toxin_type, 5)) |> 
-  # put counts in decreasing order
-  count(toxin_type) |> 
+  mutate(toxin_grp = fct_lump_n(toxin_grp, 5)) |> 
+  # make "Miscellaneous" food group "Other"
+  mutate(Food_type = fct_other(Food_type, drop = "Miscellaneous"))
+
+# put counts in decreasing order for graphing
+work_data |> 
+  count(toxin_grp) |> 
   arrange(-n) |> 
   # set up horizontal bar graph--CAN THIS BE COMBINED WITH PREVIOUS LINE?
-  ggplot(aes(x = reorder(toxin_type, n), y = n)) +
+  ggplot(aes(x = reorder(toxin_grp, n), y = n)) +
   # bar graph
   geom_col() + 
-  # add counts as label
+  # add counts as labels on ends of bars
   geom_text(aes(label = n), hjust = -0.5) + 
   labs(y = "Number of occurences", x = "Toxin group") +
+  ylim(0, 225) +
   # make graph horizontal
   coord_flip() 
   
@@ -132,14 +137,19 @@ main_data |>
 # OK TO HERE --------------------------------------------------------------
 
 # most prevalent toxin types by food type
-main_data |> 
+work_data |> 
   filter_out(amount == 0) |> 
-  count(Food_type, toxin_type) |> 
+  count(Food_type, toxin_grp) |> 
   arrange(-n) |> 
   print(n = Inf)
 
-
+xtabs(~ toxin_grp + Food_type, data = subset(work_data, amount > 0))
   
+work_data |> 
+  filter_out(amount == 0) |> 
+  count(Food_type) |> 
+  arrange(-n) 
+
   # inner_join(products) |> 
   # summarize(n = n(), any_toxin = sum(n_toxins > 0)) |> 
   # mutate(no_toxin = n - any_toxin)
