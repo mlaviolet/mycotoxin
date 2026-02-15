@@ -122,13 +122,14 @@ work_data <- main_data |>
   mutate(Food_type = fct_other(Food_type, drop = "Miscellaneous"))
 
 # labels of groups with individual toxins
-toxin_grp_lbl <- rev(
+toxin_grp_lbl <-
   c("Cyclic hexadepsipeptide\n(Beau, Enn_A, Enn_A1, Enn_B, Enn_B1)",
     "Dibenzopyrone\n(AOH, AME)",
     "Difuranocoumarin\n(AFB1, AFB2, AFG1, AFG2)",
     "Polyketide\n(CIT, FB1, FB2, FB3, GRI)",
     "Trichothecene\n(3_Ace, 15_Ace, DAS, DOM, DON,\nDON_3_Glu, FUS-X, HT_2, NEO, NIV, T2)",
-    "Other\n(\u03b1-ZEA, \u03b2-ZEA, CPA, OTA, Rocq, STC, ZEA)"))
+    "Other\n(\u03b1-ZEA, \u03b2-ZEA, CPA, OTA, Rocq, STC, ZEA)") |> 
+  rev()
 
 # \u03b1 is Unicode for lower-case alpha; \u03b2 is lower-case beta
 
@@ -142,13 +143,16 @@ work_data |>
   geom_col(fill = "grey60") + 
   # add counts as labels on ends of bars
   geom_text(aes(label = n), hjust = -0.5) + 
-  labs(y = "Number of occurrences (n = 4,012)", x = "Toxin group") +
+  labs(y = "Number of occurrences", caption = "Number of products tested: 118") +
   ylim(0, 235) +
   scale_x_discrete(labels = toxin_grp_lbl) + 
-  theme(axis.title.y = element_blank()) +
+  theme(axis.title.y = element_blank(),
+        plot.caption = element_text(hjust = 0.5)) +
   # make graph horizontal
   coord_flip() 
-ggsave(here("output", "graph_toxin.png"))
+
+ggsave(here("output", 
+            paste0("graph_toxin-", as.character(today()), ".png")))
 
 # Table of toxin groups by food type --------------------------------------  
 x <- work_data |> 
