@@ -55,17 +55,17 @@ by_food_type <- number_toxins |>
 
 # Test for differences by type
 # make contingency table as matrix
-z <- by_food_type |> 
-  filter(Food_type != "Miscellaneous") |> 
+food_by_any_toxin <- by_food_type |> 
+  # filter(Food_type != "Miscellaneous") |> 
   select(any_toxin, no_toxin) |> 
   as.matrix(dimnames = list(by_food_type$Food_type, names(by_food_type)))
 # row names not coming out for some reason; add manually
-rownames(z) <- by_food_type$Food_type
+rownames(food_by_any_toxin) <- by_food_type$Food_type
 
 # chi-square approximation questionable, use simulated p-value
-# exclude "Other"
-chisq.test(z[-7,], simulate.p.value = TRUE)
-# P = 0.47; if include Other, P = 0.62
+set.seed(42)
+chisq.test(food_by_any_toxin, simulate.p.value = TRUE)
+# P = 0.33
 
 # most prevalent toxins ---------------------------------------------------
 toxin_tally <- main_data |> 
@@ -149,8 +149,8 @@ work_data |>
   # make graph horizontal
   coord_flip() 
 
-ggsave(here("output", 
-            paste0("graph_toxin-", as.character(today()), ".png")))
+# ggsave(here("output", 
+#             paste0("graph_toxin-", as.character(today()), ".png")))
 
 # Table of toxin groups by food type --------------------------------------  
 x <- work_data |> 
@@ -192,12 +192,11 @@ set.seed(42)
 step2 <- work_data |> 
   filter(amount ==  max(amount), .by = toxin_abb) |> 
   # filter(toxin_abb == "Ace_3") |> 
-  group_by(toxin_abb) |> 
-  slice_sample(n = 1) |> 
+  slice_sample(n = 1, by = toxin_abb) |> 
   select(toxin_abb, toxin_grp, amount, Food_type) 
   
 table_4 <- left_join(step1, step2, by = "toxin_abb") |>
-  select(starts_with("toxin"), n, max_amt, Food_type, med_amt) 
+  select(starts_with("toxin"), LOQ, n, max_amt, Food_type, med_amt) 
 levels(table_4$Food_type)[7] <- "Baby apple juice"
   
 table_4 <- table_4 |> 
