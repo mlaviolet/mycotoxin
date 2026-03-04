@@ -26,12 +26,13 @@ products <- read_xlsx("data-raw/product-key.xlsx") |>
   mutate(Food_type = fct_other(Food_type, drop = "Miscellaneous"))
 
 # full name of toxin for reporting, and type of toxin
-toxins <- read_xlsx("data-raw/2026-01-15 data legend.xlsx") |> 
+toxins <- read_xlsx("data-raw/2026-03-04 data legend.xlsx") |> 
   mutate(Abbreviation = str_replace(Abbreviation, "15_Ace", "Ace_15"),
          Abbreviation = str_replace(Abbreviation, "3_Ace", "Ace_3")) |> 
   rename(toxin_abb = Abbreviation, toxin = Mycotoxin,
          toxin_type = `Mycotoxin Type`) |> 
-  mutate(toxin_type = factor(toxin_type))
+  mutate(toxin_type = factor(toxin_type)) |> 
+  rename(LOQ = `LOQ (ppm)`)
 
 # import data from Excel file
 main_data <- read_xlsx("data-raw/Toddler study raw data 2025-12-05.xlsx",
@@ -42,7 +43,7 @@ main_data <- read_xlsx("data-raw/Toddler study raw data 2025-12-05.xlsx",
   # delete empty column
   select(- `...3`) |> 
   # change names to syntactic
-  rename(Ace_15 = `15_Ace`, Ace_3 = `3_Ace`) |> 
+  rename(Ace_15 = `15_Ace`, Ace_3 = `3_Ace`, BEA = Beau) |> 
   # change names to match updated linking table of 2026-02-07
   rename(# BETA = Beau,
          `FUS-X` = FX,
@@ -66,7 +67,8 @@ main_data <- read_xlsx("data-raw/Toddler study raw data 2025-12-05.xlsx",
   inner_join(products, by = c("ID", "Food_tested")) |> 
   # JOIN WITH TOXIN CATEGORY WHEN AVAILABLE
   inner_join(toxins, by = "toxin_abb") |> 
-  select(ID, Food_tested, toxin, amount, Food_type, toxin_abb, toxin_type) |> 
+  select(ID, Food_tested, toxin, amount, Food_type, toxin_abb, toxin_type,
+         LOQ) |> 
   mutate(across(c(Food_type, toxin_type), factor)) |> 
   mutate(Food_type = fct_other(Food_type, drop = "Miscellaneous"))
 
