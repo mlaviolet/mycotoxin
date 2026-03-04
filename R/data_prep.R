@@ -22,14 +22,16 @@ library(writexl)
 products <- read_xlsx("data-raw/product-key.xlsx") |> 
   # cleanup
   mutate(ID = str_remove(ID, " \\*2")) |> 
-  filter(Food_tested != "Organic_fruit_and_veggie_bars")
+  filter(Food_tested != "Organic_fruit_and_veggie_bars") |> 
+  mutate(Food_type = fct_other(Food_type, drop = "Miscellaneous"))
 
 # full name of toxin for reporting, and type of toxin
 toxins <- read_xlsx("data-raw/2026-01-15 data legend.xlsx") |> 
   mutate(Abbreviation = str_replace(Abbreviation, "15_Ace", "Ace_15"),
          Abbreviation = str_replace(Abbreviation, "3_Ace", "Ace_3")) |> 
   rename(toxin_abb = Abbreviation, toxin = Mycotoxin,
-         toxin_type = `Mycotoxin Type`)
+         toxin_type = `Mycotoxin Type`) |> 
+  mutate(toxin_type = factor(toxin_type))
 
 # import data from Excel file
 main_data <- read_xlsx("data-raw/Toddler study raw data 2025-12-05.xlsx",
@@ -68,7 +70,7 @@ main_data <- read_xlsx("data-raw/Toddler study raw data 2025-12-05.xlsx",
   mutate(across(c(Food_type, toxin_type), factor)) |> 
   mutate(Food_type = fct_other(Food_type, drop = "Miscellaneous"))
 
-# save data in .Rdata and .xlsx formats
+# save data in .Rdata and .xlsx formats -----------------------------------
 save(main_data, products, toxins, 
      file = here("data", "toxin_data.Rdata"))
 writexl::write_xlsx(
