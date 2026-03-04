@@ -64,7 +64,9 @@ main_data <- read_xlsx("data-raw/Toddler study raw data 2025-12-05.xlsx",
   inner_join(products, by = c("ID", "Food_tested")) |> 
   # JOIN WITH TOXIN CATEGORY WHEN AVAILABLE
   inner_join(toxins, by = "toxin_abb") |> 
-  select(ID, Food_tested, toxin, amount, Food_type, toxin_abb, toxin_type) 
+  select(ID, Food_tested, toxin, amount, Food_type, toxin_abb, toxin_type) |> 
+  mutate(across(c(Food_type, toxin_type), factor)) |> 
+  mutate(Food_type = fct_other(Food_type, drop = "Miscellaneous"))
 
 # save data in .Rdata and .xlsx formats
 save(main_data, products, toxins, 
