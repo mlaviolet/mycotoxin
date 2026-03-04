@@ -101,7 +101,6 @@ toxin_grouped <- main_data |>
   mutate(pct = 100 * n / sum(n))
 
 # Graph of toxin types ----------------------------------------------------
-
 # graph of toxin_types, collapsing less frequent
 work_data <- main_data |> 
   # use cases where a toxin was detected
@@ -171,13 +170,39 @@ ft <- xtabs(~ toxin_grp + Food_type, data = subset(work_data, amount > 0))|>
 # use save_as_docx() to save to Word  
 save_as_docx(ft, path = here("output", "table_food-by-toxin.docx"))
 
-# OK TO HERE --------------------------------------------------------------
 
 x <- work_data |> 
   filter_out(amount == 0) |> 
   count(Food_type, toxin_grp, .drop = FALSE) |> 
   arrange(-n) |> 
   pivot_wider(names_from = Food_type, values_from = n)
+
+# Table 4: Summary of samples contaminated --------------------------
+# max and median contamination level 
+# reproduce Table 4 in manuscript
+step1 <- work_data |> 
+  summarize(n = n(),
+            max_amt = max(amount),
+            med_amt = median(amount),
+            .by = toxin_abb) |> 
+  right_join(toxins, by = "toxin_abb") |> 
+  mutate(n = replace_na(n, 0)) |> 
+  as.data.frame()
+
+# Ace_3 has two with max 100; choose one at random
+set.seed(42)
+step2 <- work_data |> 
+  filter(amount ==  max(amount), .by = toxin_abb) |> 
+  # filter(toxin_abb == "Ace_3") |> 
+  group_by(toxin_abb) |> 
+  slice_sample(n = 1) |> 
+  select(toxin_abb, amount, Food_tested, Food_type) |> 
+  as.data.frame()
+  
+table_4 <- left_join(step1, step2, by = "toxin_abb") |>
+  select(starts_with("toxin"), n, med_amt, max_amt, Food_type)  
+  # arrange(toxin_abb)
+
 
 # inner_join(products) |> 
 # summarize(n = n(), any_toxin = sum(n_toxins > 0)) |> 
