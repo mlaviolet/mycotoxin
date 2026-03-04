@@ -21,7 +21,6 @@ load(here("data", "toxin_data.Rdata"))
 #     ))
 
 # all products ------------------------------------------------------------
-
 # number of toxins out of 34 in each of the 118 samples tested
 number_toxins <- main_data |> 
   summarize(n = n(), n_toxins = sum(amount > 0), .by = ID)
@@ -61,10 +60,12 @@ z <- by_food_type |>
   select(any_toxin, no_toxin) |> 
   as.matrix(dimnames = list(by_food_type$Food_type, names(by_food_type)))
 # row names not coming out for some reason; add manually
-rownames(z) <- by_food_type$Food_type[-3]
+rownames(z) <- by_food_type$Food_type
 
 # chi-square approximation questionable, use simulated p-value
-chisq.test(z, simulate.p.value = TRUE)
+# exclude "Other"
+chisq.test(z[-7,], simulate.p.value = TRUE)
+# P = 0.47; if include Other, P = 0.62
 
 # most prevalent toxins ---------------------------------------------------
 toxin_tally <- main_data |> 
@@ -116,9 +117,7 @@ work_data <- main_data |>
                              "Difuranocoumarin xanthone precursor to aflatoxin")
              )) |> 
   # keep top 5 groups and collapse others
-  mutate(toxin_grp = fct_lump_n(toxin_grp, 5)) |> 
-  # make "Miscellaneous" food group "Other"
-  mutate(Food_type = fct_other(Food_type, drop = "Miscellaneous"))
+  mutate(toxin_grp = fct_lump_n(toxin_grp, 5)) 
 
 # labels of groups with individual toxins
 toxin_grp_lbl <-
@@ -168,10 +167,10 @@ ft <- xtabs(~ toxin_grp + Food_type, data = subset(work_data, amount > 0))|>
   align(i = 1, j = NULL, align = "center", part = "header")
 # https://rdrr.io/cran/flextable/man/align.html  
 # use save_as_docx() to save to Word  
-save_as_docx(ft, path = here("output", "table_food-by-toxin.docx"))
+# save_as_docx(ft, path = here("output", "table_food-by-toxin.docx"))
 
-
-x <- work_data |> 
+# crosstab of toxin group by food type
+work_data |> 
   filter_out(amount == 0) |> 
   count(Food_type, toxin_grp, .drop = FALSE) |> 
   arrange(-n) |> 
@@ -186,8 +185,7 @@ step1 <- work_data |>
             med_amt = median(amount),
             .by = toxin_abb) |> 
   right_join(toxins, by = "toxin_abb") |> 
-  mutate(n = replace_na(n, 0)) |> 
-  as.data.frame()
+  mutate(n = replace_na(n, 0)) 
 
 # Ace_3 has two with max 100; choose one at random
 set.seed(42)
@@ -196,11 +194,22 @@ step2 <- work_data |>
   # filter(toxin_abb == "Ace_3") |> 
   group_by(toxin_abb) |> 
   slice_sample(n = 1) |> 
-  select(toxin_abb, amount, Food_tested, Food_type) |> 
-  as.data.frame()
+  select(toxin_abb, toxin_grp, amount, Food_type) 
   
 table_4 <- left_join(step1, step2, by = "toxin_abb") |>
-  select(starts_with("toxin"), n, med_amt, max_amt, Food_type)  
+  select(starts_with("toxin"), n, max_amt, Food_type, med_amt) 
+levels(table_4$Food_type)[7] <- "Baby apple juice"
+  
+table_4 <- table_4 |> 
+  arrange(toxin_grp, toxin)
+
+writexl::write_xlsx(
+  table_4, 
+  here("output", 
+       paste0("Table4_", as.character(today()), ".xlsx")
+  ))
+
+  # all "Other" are apple juice; rename
   # arrange(toxin_abb)
 
 
