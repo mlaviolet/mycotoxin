@@ -121,11 +121,11 @@ work_data <- main_data |>
 
 # labels of groups with individual toxins
 toxin_grp_lbl <-
-  c("Cyclic hexadepsipeptide\n(Beau, Enn_A, Enn_A1, Enn_B, Enn_B1)",
+  c("Cyclic hexadepsipeptide\n(BEA, Enn-A, Enn-A1, Enn-B, Enn-B1)",
     "Dibenzopyrone\n(AOH, AME)",
     "Difuranocoumarin\n(AFB1, AFB2, AFG1, AFG2)",
     "Polyketide\n(CIT, FB1, FB2, FB3, GRI)",
-    "Trichothecene\n(3_Ace, 15_Ace, DAS, DOM, DON,\nDON_3_Glu, FUS-X, HT_2, NEO, NIV, T2)",
+    "Trichothecene\n(3-Ace, 15-Ace, DAS, DOM, DON,\nDON-3-Glu, FUS-X, HT-2, NEO, NIV, T2)",
     "Other\n(\u03b1-ZEA, \u03b2-ZEA, CPA, OTA, Rocq, STC, ZEA)") |> 
   rev()
 
@@ -141,7 +141,8 @@ work_data |>
   geom_col(fill = "grey60") + 
   # add counts as labels on ends of bars
   geom_text(aes(label = n), hjust = -0.5) + 
-  labs(y = "Number of occurrences", caption = "Number of products tested: 118") +
+  labs(y = "Number of positive samples", 
+       caption = "Number of products tested: 118") +
   ylim(0, 235) +
   scale_x_discrete(labels = toxin_grp_lbl) + 
   theme(axis.title.y = element_blank(),
@@ -149,8 +150,8 @@ work_data |>
   # make graph horizontal
   coord_flip() 
 
-# ggsave(here("output", 
-#             paste0("graph_toxin-", as.character(today()), ".png")))
+ggsave(here("output",
+            paste0("graph_toxin-", as.character(today()), ".png")))
 
 # Table of toxin groups by food type --------------------------------------  
 x <- work_data |> 
