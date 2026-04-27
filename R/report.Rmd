@@ -1,6 +1,8 @@
 ---
-title: "Report"
-output: html_document
+title: "Dectected toxins"
+output:
+  pdf_document: default
+  html_document: default
 date: "2026-01-08"
 ---
 
@@ -15,6 +17,8 @@ library(broom)
 
 load(here("data", "toxin_data.Rdata"))
 ```
+
+Of the 34 toxins tested, 26 were found in at least one product. Of the 118 products tested, 104 had at least one detected toxin.
 
 ### Products with one or more toxins detected
 
@@ -43,6 +47,7 @@ Percent of products with one or more toxins detected: `r sprintf("%.1f",  z$perc
 
 This is the distribution of the number of detected toxins: 14 products had no detected toxins, 17 had 1, etc.
 
+### Distribution of number of detected toxins
 ```{r}
 # distribution of number of toxins
 number_toxins <- main_data |> 
@@ -57,6 +62,8 @@ Summary of the number of detected toxins:
 ```{r}
 summary(number_toxins$n_toxins)
 ```
+
+### Detected toxins by product type
 
 Number of detected toxins by type of product, excluding "Miscellaneous"; e.g., of the 25 breakfast cereal products, 21 had at least one detected toxin.
 
@@ -79,7 +86,7 @@ rownames(z1) <- by_food_type$Food_type[-3]
 z1
 ```
 
-A simulated chi-square test indicates that the proportions of products with at least one detected toxin are approximately equal across the six groups (P = 0.48).
+A simulated chi-square test indicates that the proportions of products with at least one detected toxin are approximately equal across the six groups (P = 0.47).
 
 ```{r}
 # chi-square approximation questionable, use simulated p-value
@@ -101,5 +108,18 @@ These 8 toxins were not detected in any product.
 ```{r}
 # toxins not occurring in any product
 setdiff(unique(main_data$toxin), toxin_tally$toxin)
+```
+
+Most prevalent detected toxins by product group, excluding "Miscellaneous"; top five shown:
+
+```{r}
+food_type_list <- main_data |> 
+  filter(amount > 0, Food_type != "Miscellaneous") |> 
+  group_by(Food_type) |>
+  count(toxin) |> 
+  arrange(Food_type, -n) |> 
+  group_split() 
+
+walk(food_type_list, \(x) print(x, n = 5))
 ```
 
