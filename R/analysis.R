@@ -121,7 +121,7 @@ work_data <- main_data |>
 
 # labels of groups with individual toxins
 toxin_grp_lbl <-
-  c("Cyclic hexadepsipeptide\n(BEA, Enn-A, Enn-A1, Enn-B, Enn-B1)",
+  c("Cyclic hexadepsipeptide\n(BEA, EnnA, EnnA1, EnnB, EnnB1)",
     "Dibenzopyrone\n(AOH, AME)",
     "Difuranocoumarin\n(AFB1, AFB2, AFG1, AFG2)",
     "Polyketide\n(CIT, FB1, FB2, FB3, GRI)",
