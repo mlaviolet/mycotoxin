@@ -5,6 +5,7 @@
 **/*.xlsx
 .positai
 drafts/
+data/
 data-raw/
 **/*.pdf
 **/*.html
