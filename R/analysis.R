@@ -252,3 +252,8 @@ writexl::write_xlsx(
 # main_data |> 
 #   group_by(Food_type, ID) |> 
 #   summarize(n = n(), n_toxins = sum(amount > 0))
+
+# references for heatmaps
+# https://davetang.org/muse/2010/12/06/making-a-heatmap-with-r/
+# https://cran.r-project.org/web/packages/viridis/vignettes/intro-to-viridis.html
+
