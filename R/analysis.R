@@ -4,10 +4,12 @@ library(here)
 library(tidyverse)
 library(broom)
 library(flextable)
+# library(widyr)
 
 theme_set(theme_classic())
 
-load(here("data", "toxin_data.Rdata"))
+# load(here("data", "toxin_data.Rdata"))
+load(here("data", "toxin_data_2026-06-06.Rdata"))
 
 # # coerce toxin type and food groups to factors
 # main_data <- main_data |> 
@@ -32,6 +34,10 @@ number_toxins |>
 range(number_toxins$n_toxins)
 quantile(number_toxins$n_toxins, probs = c(0.1, 0.25, 0.5, 0.75, 0.9))
 summary(number_toxins$n_toxins)
+# MEDIAN IS NOW 3, MEAN IS 3.6
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+# 0.000   1.000   3.000   3.627   6.000  13.000 
+
 
 # Clopper-Pearson interval
 n <- nrow(number_toxins)
@@ -44,6 +50,8 @@ binom.test(x, n) |> tidy()
 
 # Wilson interval
 epitools::binom.wilson(x, n)
+# x   n proportion    lower     upper conf.level
+# 1 103 118  0.8728814 0.800821 0.9214291       0.95
 
 # by product type ---------------------------------------------------------
 by_food_type <- number_toxins |> 
@@ -65,7 +73,7 @@ rownames(food_by_any_toxin) <- by_food_type$Food_type
 # chi-square approximation questionable, use simulated p-value
 set.seed(42)
 chisq.test(food_by_any_toxin, simulate.p.value = TRUE)
-# P = 0.33
+# P = 0.66
 
 # most prevalent toxins ---------------------------------------------------
 toxin_tally <- main_data |> 
@@ -75,6 +83,7 @@ toxin_tally <- main_data |>
 
 # toxins not occurring in any product
 setdiff(unique(main_data$toxin_abb), toxin_tally$toxin_abb)
+# [1] "Rocq"  "AFG2"  "DAS"   "FUS-X" "NEO"   "CIT"   "a-ZEA" "b-ZEA"
 
 # distribution of food types
 main_data |> 
@@ -151,7 +160,7 @@ work_data |>
   coord_flip() 
 
 ggsave(here("output",
-            paste0("graph_toxin-", as.character(today()), ".png")))
+            paste0("graph_toxin_", as.character(today()), ".png")))
 
 # Table of toxin groups by food type --------------------------------------  
 x <- work_data |> 
@@ -238,9 +247,10 @@ writexl::write_xlsx(
 #          n = `FALSE` + `TRUE`) |> 
 #   select(toxins = `TRUE`, n)
 
-# number_toxins <- main_data |> 
-#   group_by(ID) |> 
-#   count(detected = amount > 0) |> 
+# number_toxins <- main_data |> n_levels <- nlevels(my_factor)
+
+# Calculate combinations (n choose 2)
+# choose(n_levels, 2)
 #   ungroup() |> 
 #   pivot_wider(id_cols = ID, names_from = detected, values_from = n) |>  
 #   mutate(across(c(`FALSE`, `TRUE`), ~ replace_na(., 0)),
@@ -256,4 +266,20 @@ writexl::write_xlsx(
 # references for heatmaps
 # https://davetang.org/muse/2010/12/06/making-a-heatmap-with-r/
 # https://cran.r-project.org/web/packages/viridis/vignettes/intro-to-viridis.html
+
+# NOT WORKING
+df <- work_data |> 
+  widyr::pairwise_count(item = toxin_grp, feature = ID, diag = FALSE) |> 
+  print(n = Inf)
+  
+df2 <- work_data %>%
+  # Join data onto itself by the group identifier
+  inner_join(work_data, by = "ID", relationship = "many-to-many") %>%
+  # Filter to avoid matching an item with itself or counting pairs twice
+  filter(toxin_grp.x < toxin_grp.y) %>%
+  # Count the unique pairs per group
+  count(ID, toxin_grp.x, toxin_grp.y, name = "pair_count")
+
+ # NEED TO BUILD SIMPLE TEST DATA SET
+
 
