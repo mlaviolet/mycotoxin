@@ -1,0 +1,38 @@
+Search "r count pairs by group"
+
+To count unique pairs in R, your approach depends entirely on how your data is structured. Here are the solutions for the three most common scenarios side-by-side.
+
+Scenario A: You have two distinct columns
+
+If you want to find how many unique combinations exist between Column X and Column Y (e.g., User ID and Event Type):Rlibrary(dplyr)
+
+# Method 1: Get the total count of unique pairs
+df %>% 
+  distinct(col1, col2) %>% 
+  nrow()
+
+# Method 2: List the unique pairs and see how often each appears
+df %>% 
+  count(col1, col2, sort = TRUE)
+Use code with caution.
+
+Scenario B: You have one column (and order matters)
+If you want to count unique pairings of values within a single vector or column where Direction / Order matters (e.g., A-B is different from B-A):R# 
+
+Base R matrix approach
+pairs_matrix % 
+  distinct(my_column) %>% 
+  expand.grid() # Generates all possible permutations
+Use code with caution.
+
+Scenario C: You have one column (and order does NOT matter)
+
+If you want to count unique pairings within a single vector where order is irrelevant (e.g., a partnership between A-B is identical to B-A):R# Get unique values first
+unique_vals <- unique(df$my_column)
+
+# 1. Fast total count using math (n choose 2)
+choose(length(unique_vals), 2)
+
+# 2. To actually generate and count the unique pairs:
+all_pairs <- combn(unique_vals, 2)
+ncol(all_pairs) # The total count
