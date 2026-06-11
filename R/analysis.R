@@ -25,11 +25,16 @@ load(here("data", "toxin_data_2026-06-06.Rdata"))
 # all products ------------------------------------------------------------
 # number of toxins out of 34 in each of the 118 samples tested
 number_toxins <- main_data |> 
-  summarize(n = n(), n_toxins = sum(amount > 0), .by = ID)
+  summarize(n = n(), 
+            n_toxins = sum(amount > 0), 
+            .by = ID) |> 
+  arrange(ID)
 
 # distribution of number of toxins
 number_toxins |> 
   count(n_toxins)
+
+# 45 of 118 have two toxins or fewer
 
 range(number_toxins$n_toxins)
 quantile(number_toxins$n_toxins, probs = c(0.1, 0.25, 0.5, 0.75, 0.9))
@@ -37,7 +42,6 @@ summary(number_toxins$n_toxins)
 # MEDIAN IS NOW 3, MEAN IS 3.6
 # Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
 # 0.000   1.000   3.000   3.627   6.000  13.000 
-
 
 # Clopper-Pearson interval
 n <- nrow(number_toxins)
@@ -218,6 +222,10 @@ writexl::write_xlsx(
        paste0("Table4_", as.character(today()), ".xlsx")
   ))
 
+
+# OK TO HERE --------------------------------------------------------------
+
+
   # all "Other" are apple juice; rename
   # arrange(toxin_abb)
 
@@ -268,6 +276,15 @@ writexl::write_xlsx(
 # https://cran.r-project.org/web/packages/viridis/vignettes/intro-to-viridis.html
 
 # NOT WORKING
+unique_vals <- unique(work_data$toxin_grp)
+df <- work_data |> 
+  group_by(ID)
+  mutate(x = combn(unique_vals, 2))
+
+choose(length(unique_vals), 2)
+x <- all_pairs <- combn(unique_vals, 2)
+class(all_pairs) 
+
 df <- work_data |> 
   widyr::pairwise_count(item = toxin_grp, feature = ID, diag = FALSE) |> 
   print(n = Inf)
