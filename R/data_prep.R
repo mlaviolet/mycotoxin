@@ -35,18 +35,21 @@ toxins <- read_xlsx("data-raw/2026-03-04 data legend.xlsx") |>
   rename(LOQ = `LOQ (ppm)`)
 
 # import data from Excel file
-main_data <- read_xlsx("data-raw/Toddler raw data 2026-06-05.xlsx",
-                       na = c("nd", "np", "dn"),
+main_data <- 
+  read_xlsx(here("data-raw", 
+                 "Toddler study raw with LOD data saved 2026-06-11.xlsx"),
+# main_data <- read_xlsx("data-raw/Toddler raw data 2026-06-05.xlsx",
+                       na = c("nd", "np", "dn", "< 0"),
                        # cells E4 and M40 are apparently typos
                        col_types = c(rep("text", 3), rep("numeric", 34)),
                        n_max = 118) |> 
+  rename(ID = 2) |> 
   # delete empty column
   select(- `...3`) |> 
   # change names to syntactic; change ID field to "ID"
   rename(Ace_15 = `15_Ace`, 
          Ace_3 = `3_Ace`, 
-         BEA = Beau, 
-         ID = Number) |> 
+         BEA = Beau) |> 
   # change names to match updated linking table of 2026-02-07
   rename(# BETA = Beau,
          `FUS-X` = FX,
@@ -78,7 +81,8 @@ main_data <- read_xlsx("data-raw/Toddler raw data 2026-06-05.xlsx",
   # change Food_type and toxin_type to factors
   mutate(across(c(Food_type, toxin_type), factor)) |> 
   # change "Miscellaneous" food type to "Other" so it appears last
-  mutate(Food_type = fct_other(Food_type, drop = "Miscellaneous"))
+  mutate(Food_type = fct_other(Food_type, drop = "Miscellaneous")) |> 
+  arrange(ID)
 
 # save data in .Rdata and .xlsx formats -----------------------------------
 # .Rdata format
