@@ -5,6 +5,7 @@
 .positai
 drafts/
 data/
+output/
 data-raw/
 **/*.pdf
 **/*.html
