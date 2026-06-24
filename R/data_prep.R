@@ -35,17 +35,21 @@ toxins <- read_xlsx("data-raw/2026-03-04 data legend.xlsx") |>
   rename(LOQ = `LOQ (ppm)`)
 
 # import data from Excel file
+# THIS IS DATA FOR LOQ--IMPORT DATA FROM LOD AND MERGE
+# DATA SOURCE FOR LOD DATA IS
+#   "Toddler study raw with LOD data saved 2026-06-15 with DS.xlsx"
 main_data <- 
   read_xlsx(here("data-raw", 
-                 "Toddler study raw with LOD data saved 2026-06-11.xlsx"),
-# main_data <- read_xlsx("data-raw/Toddler raw data 2026-06-05.xlsx",
+                 # "data-raw/Toddler raw data 2026-06-05.xlsx"),
+                 # "Toddler study raw with LOD data saved 2026-06-11.xlsx"),
+                 "Toddler raw data with just LOQ 2026-06-15 with DS.xlsx"),
                        na = c("nd", "np", "dn", "< 0"),
                        # cells E4 and M40 are apparently typos
-                       col_types = c(rep("text", 3), rep("numeric", 34)),
+                       col_types = c(rep("text", 3), rep("numeric", 35)),
                        n_max = 118) |> 
-  rename(ID = 2) |> 
-  # delete empty column
-  select(- `...3`) |> 
+  rename(ID = Number) |> 
+  # delete empty column and count
+  select(- `...3`, -Count) |> 
   # change names to syntactic; change ID field to "ID"
   rename(Ace_15 = `15_Ace`, 
          Ace_3 = `3_Ace`, 
