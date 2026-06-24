@@ -80,25 +80,53 @@ main_data <-
   inner_join(products, by = c("ID", "Food_tested")) |> 
   # join with table of toxin names and abbreviations
   inner_join(toxins, by = "toxin_abb") |> 
-  select(ID, Food_tested, toxin, amount, Food_type, toxin_abb, toxin_type,
-         LOQ) |> 
+  select(ID, Food_tested, toxin, amount, Food_type, toxin_abb, toxin_type) |> 
   # change Food_type and toxin_type to factors
   mutate(across(c(Food_type, toxin_type), factor)) |> 
   # change "Miscellaneous" food type to "Other" so it appears last
   mutate(Food_type = fct_other(Food_type, drop = "Miscellaneous")) |> 
   arrange(ID)
 
+detect_df <- 
+  readxl::read_xlsx(
+    here("data-raw", "Toddler study raw with LOD data saved 2026-06-11.xlsx"),
+    na = "nd") |> 
+  select(-`...3`, -Food_tested) |> 
+  rename(ID = `...2`) |> 
+  mutate(across(!ID, ~ if_else(is.na(.x), "No", "Detected"))) |> 
+  pivot_longer(cols = !ID, names_to = "toxin_abb", values_to = "detected") |> 
+  # getting 120 specimens instead of 118
+  filter_out(is.na(ID)) |> 
+  mutate(ID = str_remove(ID, " \\*2")) |> 
+  # summarize(n_detect = sum(value == "Detected"), .by = toxin_abb) |> 
+  # make abbreviations match
+  mutate(toxin_abb = str_replace(toxin_abb, "Alpha", "a-ZEA"),
+         toxin_abb = str_replace(toxin_abb, "Beta", "b-ZEA"),
+         toxin_abb = str_replace(toxin_abb, "15_Ace", "Ace_15"),
+         toxin_abb = str_replace(toxin_abb, "3_Ace", "Ace_3"),
+         toxin_abb = str_replace(toxin_abb, "Beau", "BEA"),
+         toxin_abb = str_replace(toxin_abb, "FX", "FUS-X"),
+         toxin_abb = str_replace(toxin_abb, "GRIS", "GRI"),
+         toxin_abb = str_replace(toxin_abb, "Sterig", "STC"),
+         toxin_abb = str_replace(toxin_abb, "ALT", "AOH"),
+         toxin_abb = str_replace(toxin_abb, "NEOS", "NEO"),
+         toxin_abb = str_replace(toxin_abb, "ZONE", "ZEA")
+  )
+
+main_data <- main_data |> 
+  inner_join(detect_df, by = c("ID", "toxin_abb"))
+
 # save data in .Rdata and .xlsx formats -----------------------------------
 # .Rdata format
-save(main_data, products, toxins, 
-     file = here("data", 
-                 paste0("toxin_data_", as.character(today()), ".Rdata")))
-# Excel format
-writexl::write_xlsx(
-  main_data, 
-  path = here("data", 
-              paste0("working_data_", as.character(today()), ".xlsx")
-              ))
+# save(main_data, products, toxins,
+#      file = here("data",
+#                  paste0("toxin_data_", as.character(today()), ".Rdata")))
+# # Excel format
+# writexl::write_xlsx(
+#   main_data,
+#   path = here("data",
+#               paste0("working_data_", as.character(today()), ".xlsx")
+#               ))
 
 # OK TO HERE --------------------------------------------------------------
 
