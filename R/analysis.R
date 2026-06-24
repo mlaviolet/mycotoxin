@@ -86,8 +86,9 @@ toxin_tally <- main_data |>
   arrange(-n)
 
 # toxins not occurring in any product
-setdiff(unique(main_data$toxin_abb), toxin_tally$toxin_abb)
-# [1] "Rocq"  "AFG2"  "DAS"   "FUS-X" "NEO"   "CIT"   "a-ZEA" "b-ZEA"
+setdiff(unique(main_data$toxin_abb), toxin_tally$toxin_abb) |> sort()
+# [1] "a-ZEA" "AFG2" "b-ZEA" "CIT" "DAS" "FUS-X" "NEO" "Rocq" 
+# ? "GRI" "NIV"
 
 # distribution of food types
 main_data |> 
@@ -200,6 +201,9 @@ step1 <- work_data |>
             .by = toxin_abb) |> 
   right_join(toxins, by = "toxin_abb") |> 
   mutate(n = replace_na(n, 0)) 
+
+step1 |> 
+  select(toxin_abb, n, )
 
 # Ace_3 has two with max 100; choose one at random
 set.seed(42)
