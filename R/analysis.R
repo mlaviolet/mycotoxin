@@ -122,8 +122,8 @@ toxin_grouped <- main_data |>
 # QUANTIFIED OR DETECTED? #####################
 # redo factor levels to group similar toxins and collapse less frequent
 work_data <- main_data |> 
-  # filter(amount > 0) |> 
-  filter(detected == "Detected") |> 
+  # filter(amount > 0) |>             # QUANTIFIED
+  filter(detected == "Detected") |>   # DETECTED
   # collapse trichothecene and difuranocoumarin groups
   mutate(
     toxin_grp = 
@@ -174,7 +174,10 @@ work_data |>
   coord_flip() 
 
 # ggsave(here("output",
-#             paste0("graph_toxin_", as.character(today()), ".png")))
+#             paste0("graph_quantified_", as.character(today()), ".png")))
+
+ggsave(here("output",
+            paste0("graph_detected_", as.character(today()), ".png")))
 
 # Table of toxin groups by food type --------------------------------------  
 x <- work_data |> 
