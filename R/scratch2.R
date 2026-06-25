@@ -6,6 +6,15 @@ library(tidyverse)
 # load data
 load(here("data", "toxin_data_2026-06-06.Rdata"))
 
+toxin_grp_lbl <-
+  c("Cyclic hexadepsipeptide\n(BEA, EnnA, EnnA1, EnnB, EnnB1)",
+    "Dibenzopyrone\n(AOH, AME)",
+    "Difuranocoumarin\n(AFB1, AFB2, AFG1, AFG2)",
+    "Polyketide\n(CIT, FB1, FB2, FB3, GRI)",
+    "Trichothecene\n(3-Ace, 15-Ace, DAS, DOM, DON,\nDON-3-Glu, FUS-X, HT-2, NEO, NIV, T2)",
+    "Other\n(\u03b1-ZEA, \u03b2-ZEA, CPA, OTA, Rocq, STC, ZEA)") |> 
+  rev()
+
 # bar graph of detected and quantified
 bar_data <- main_data |> 
   select(toxin_type, amount, detected) |> 
@@ -22,18 +31,35 @@ bar_data <- main_data |>
         Difuranocoumarin = c("Difuranocoumarin",
                              "Difuranocoumarin xanthone precursor to aflatoxin")
       )) |> 
-  
   # keep top 5 groups and collapse others
   mutate(toxin_grp = fct_lump_n(toxin_grp, 5)) |> 
   select(-toxin_type) |> 
-  pivot_longer(-toxin_grp)
-
-bar_data |> 
+  pivot_longer(-toxin_grp) |> 
   filter_out(value == "Not quantified") |> 
-  ggplot(aes(x = toxin_grp, fill = value)) +
-  geom_bar(position = "dodge") +
-  coord_flip()
-# THIS IS IT--TWEAK
+  select(-name) |> 
+  mutate(value = factor(value, levels = c("Detected", "Quantified")))
+  
+bar_data |> 
+  ggplot() +
+  aes(x = toxin_grp, fill = value) +
+  labs(y = "Count", x = "Toxin class") +
+  geom_bar(position = position_dodge(reverse = TRUE)) +
+  scale_fill_discrete(palette = c("#ef8a62", "#67a9cf")) +
+  # geom_bar(position = "dodge") +
+  geom_text(
+    stat = "count", # Tells ggplot to calculate counts for the text labels
+    aes(label = after_stat(count)), # Pulls the calculated counts into the label
+    position = position_dodge(width = 0.9, reverse = TRUE),
+    hjust = -0.5) +
+  scale_x_discrete(limits = rev) +
+  ylim(0, 300) +
+  coord_flip() +
+  theme(legend.title = element_blank(),
+        legend.position = "inside",
+        legend.position.inside = c(0.85, 0.1))
+
+
+# THIS IS IT--TWEAK -------------------------------------------------------
 
 bar_data |> 
   count(quantified)
