@@ -4,12 +4,14 @@ library(here)
 library(tidyverse)
 library(broom)
 library(flextable)
+library(readxl)
+library(writexl)
 # library(widyr)
 
 theme_set(theme_classic())
 
 # load(here("data", "toxin_data.Rdata"))
-load(here("data", "toxin_data_2026-06-06.Rdata"))
+load(here("data", "toxin_data_2026-06-24.Rdata"))
 
 # # coerce toxin type and food groups to factors
 # main_data <- main_data |> 
@@ -23,7 +25,7 @@ load(here("data", "toxin_data_2026-06-06.Rdata"))
 #     ))
 
 # all products ------------------------------------------------------------
-# number of toxins out of 34 in each of the 118 samples tested
+# number of toxins out of 34 in each of the 118 samples tested--QUANTIFIED
 number_toxins <- main_data |> 
   summarize(n = n(), 
             n_toxins = sum(amount > 0), 
@@ -86,6 +88,7 @@ toxin_tally <- main_data |>
   arrange(-n)
 
 # toxins not occurring in any product
+# THESE ARE QUANTIFIED
 setdiff(unique(main_data$toxin_abb), toxin_tally$toxin_abb) |> sort()
 # [1] "a-ZEA" "AFG2" "b-ZEA" "CIT" "DAS" "FUS-X" "NEO" "Rocq" 
 # ? "GRI" "NIV"
@@ -116,10 +119,11 @@ toxin_grouped <- main_data |>
   mutate(pct = 100 * n / sum(n))
 
 # Graph of toxin types ----------------------------------------------------
-# graph of toxin_types, collapsing less frequent
+# QUANTIFIED OR DETECTED? #####################
+# redo factor levels to group similar toxins and collapse less frequent
 work_data <- main_data |> 
-  # use cases where a toxin was detected
-  filter(amount > 0) |> 
+  # filter(amount > 0) |> 
+  filter(detected == "Detected") |> 
   # collapse trichothecene and difuranocoumarin groups
   mutate(
     toxin_grp = 
@@ -130,8 +134,10 @@ work_data <- main_data |>
         Difuranocoumarin = c("Difuranocoumarin",
                              "Difuranocoumarin xanthone precursor to aflatoxin")
              )) |> 
+
   # keep top 5 groups and collapse others
-  mutate(toxin_grp = fct_lump_n(toxin_grp, 5)) 
+  mutate(toxin_grp = fct_lump_n(toxin_grp, 5)) |> 
+  select(ID, toxin_grp) 
 
 # labels of groups with individual toxins
 toxin_grp_lbl <-
@@ -146,26 +152,29 @@ toxin_grp_lbl <-
 # \u03b1 is Unicode for lower-case alpha; \u03b2 is lower-case beta
 
 # put counts in decreasing order for graphing
+# this is with quantified amounts
+# DO WE WANT DETECTED OR QUANTIFED HERE?
 work_data |> 
   count(toxin_grp) |> 
   # arrange(-n) |> 
   # set up horizontal bar graph--CAN THIS BE COMBINED WITH PREVIOUS LINE?
   ggplot(aes(x = reorder(toxin_grp, n), y = n)) +
   # bar graph
-  geom_col(fill = "grey60") + 
+  geom_col(fill = "grey60") + # 
   # add counts as labels on ends of bars
   geom_text(aes(label = n), hjust = -0.5) + 
   labs(y = "Number of positive samples", 
        caption = "Number of products tested: 118") +
-  ylim(0, 235) +
+  # ylim(0, 235) +
+  ylim(0, 300) +
   scale_x_discrete(labels = toxin_grp_lbl) + 
   theme(axis.title.y = element_blank(),
         plot.caption = element_text(hjust = 0.5)) +
   # make graph horizontal
   coord_flip() 
 
-ggsave(here("output",
-            paste0("graph_toxin_", as.character(today()), ".png")))
+# ggsave(here("output",
+#             paste0("graph_toxin_", as.character(today()), ".png")))
 
 # Table of toxin groups by food type --------------------------------------  
 x <- work_data |> 
@@ -203,7 +212,7 @@ step1 <- work_data |>
   mutate(n = replace_na(n, 0)) 
 
 step1 |> 
-  select(toxin_abb, n, )
+  select(toxin_abb, n)
 
 # Ace_3 has two with max 100; choose one at random
 set.seed(42)
@@ -220,12 +229,57 @@ levels(table_4$Food_type)[7] <- "Baby apple juice"
 table_4 <- table_4 |> 
   arrange(toxin_grp, toxin)
 
-writexl::write_xlsx(
-  table_4, 
-  here("output", 
-       paste0("Table4_", as.character(today()), ".xlsx")
-  ))
+# writexl::write_xlsx(
+#   table_4, 
+#   here("output", 
+#        paste0("Table4_", as.character(today()), ".xlsx")
+#   ))
 
+# add LOD data
+# table of 34 toxins with LOQ and LOD
+tbl3 <- 
+  readxl::read_xlsx(
+    here("data-raw", "Toddler study raw with LOD data saved 2026-06-11.xlsx"),
+    na = "nd") |> 
+  select(-`...3`, -Food_tested) |> 
+  rename(ID = `...2`) |> 
+  mutate(across(!ID, ~ if_else(is.na(.x), "No", "Detected"))) |> 
+  pivot_longer(cols = !ID, names_to = "toxin_abb") |> 
+  # getting 120 specimens instead of 118
+  filter_out(is.na(ID)) |> 
+  summarize(n_detect = sum(value == "Detected"), .by = toxin_abb) |> 
+  # make abbreviations match
+  mutate(toxin_abb = str_replace(toxin_abb, "Alpha", "a-ZEA"),
+         toxin_abb = str_replace(toxin_abb, "Beta", "b-ZEA"),
+         toxin_abb = str_replace(toxin_abb, "15_Ace", "Ace_15"),
+         toxin_abb = str_replace(toxin_abb, "3_Ace", "Ace_3"),
+         toxin_abb = str_replace(toxin_abb, "Beau", "BEA"),
+         toxin_abb = str_replace(toxin_abb, "FX", "FUS-X"),
+         toxin_abb = str_replace(toxin_abb, "GRIS", "GRI"),
+         toxin_abb = str_replace(toxin_abb, "Sterig", "STC"),
+         toxin_abb = str_replace(toxin_abb, "ALT", "AOH"),
+         toxin_abb = str_replace(toxin_abb, "NEOS", "NEO"),
+         toxin_abb = str_replace(toxin_abb, "ZONE", "ZEA")
+  )
+
+df <- table_4 |> 
+  full_join(tbl3, by = "toxin_abb")
+
+lod <- readxl::read_xlsx(
+  here("data-raw", "LOQ-LOD.xlsx")) |> 
+  select(3:4) |> 
+  rename(LOD = `LOD (µg/kg)`)
+
+df <- df |> 
+  full_join(lod, by = "toxin_abb") |> 
+  select(toxin_grp, toxin, toxin_abb, LOD, n_detect, LOQ, n_quant = n, 
+         max_amt, med_amt, Food_type)
+
+# writexl::write_xlsx(
+#   df,
+#   here("output",
+#        paste0("Table3_", as.character(today()), ".xlsx")
+#   ))
 
 # OK TO HERE --------------------------------------------------------------
 
