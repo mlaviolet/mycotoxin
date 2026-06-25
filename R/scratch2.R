@@ -12,14 +12,28 @@ bar_data <- main_data |>
   mutate(quantified = if_else(amount > 0, "Quantified", "Not quantified")) |> 
   select(-amount) |> 
   filter_out(detected == "No") |> 
-  pivot_longer(-toxin_type)
+  # collapse trichothecene and difuranocoumarin groups
+  mutate(
+    toxin_grp = 
+      fct_collapse(
+        toxin_type,
+        Trichothecene = c("Trichothecene Type A", 
+                          "Trichothecene Type B"),
+        Difuranocoumarin = c("Difuranocoumarin",
+                             "Difuranocoumarin xanthone precursor to aflatoxin")
+      )) |> 
+  
+  # keep top 5 groups and collapse others
+  mutate(toxin_grp = fct_lump_n(toxin_grp, 5)) |> 
+  select(-toxin_type) |> 
+  pivot_longer(-toxin_grp)
 
 bar_data |> 
   filter_out(value == "Not quantified") |> 
-  ggplot(aes(x = toxin_type, fill = value)) +
+  ggplot(aes(x = toxin_grp, fill = value)) +
   geom_bar(position = "dodge") +
   coord_flip()
-
+# THIS IS IT--TWEAK
 
 bar_data |> 
   count(quantified)
