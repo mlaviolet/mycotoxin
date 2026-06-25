@@ -7,12 +7,12 @@ library(tidyverse)
 load(here("data", "toxin_data_2026-06-06.Rdata"))
 
 toxin_grp_lbl <-
-  c("Cyclic hexadepsipeptide\n(BEA, EnnA, EnnA1, EnnB, EnnB1)",
-    "Dibenzopyrone\n(AOH, AME)",
-    "Difuranocoumarin\n(AFB1, AFB2, AFG1, AFG2)",
-    "Polyketide\n(CIT, FB1, FB2, FB3, GRI)",
-    "Trichothecene\n(3-Ace, 15-Ace, DAS, DOM, DON,\nDON-3-Glu, FUS-X, HT-2, NEO, NIV, T2)",
-    "Other\n(\u03b1-ZEA, \u03b2-ZEA, CPA, OTA, Rocq, STC, ZEA)") |> 
+  c("Cyclic hexadepsipeptide\nBEA, EnnA, EnnA1, EnnB, EnnB1",
+    "Dibenzopyrone\nAOH, AME",
+    "Difuranocoumarin\nAFB1, AFB2, AFG1, AFG2",
+    "Polyketide\nCIT, FB1, FB2, FB3, GRI",
+    "Trichothecene\n3-Ace, 15-Ace, DAS, DOM, DON,\nDON-3-Glu, FUS-X, HT-2, NEO, NIV, T2",
+    "Other\n\u03b1-ZEA, \u03b2-ZEA, CPA, OTA, Rocq, STC, ZEA") |> 
   rev()
 
 # bar graph of detected and quantified
@@ -42,16 +42,16 @@ bar_data <- main_data |>
 bar_data |> 
   ggplot() +
   aes(x = toxin_grp, fill = value) +
-  labs(y = "Count", x = "Toxin class") +
+  labs(y = "Count", x = NULL) +
   geom_bar(position = position_dodge(reverse = TRUE)) +
   scale_fill_discrete(palette = c("#ef8a62", "#67a9cf")) +
-  # geom_bar(position = "dodge") +
+  
   geom_text(
     stat = "count", # Tells ggplot to calculate counts for the text labels
     aes(label = after_stat(count)), # Pulls the calculated counts into the label
     position = position_dodge(width = 0.9, reverse = TRUE),
     hjust = -0.5) +
-  scale_x_discrete(limits = rev) +
+  scale_x_discrete(limits = rev, labels = toxin_grp_lbl) + 
   ylim(0, 300) +
   coord_flip() +
   theme(legend.title = element_blank(),
