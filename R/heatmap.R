@@ -37,9 +37,10 @@ dfx |>
   geom_tile(color = "grey") +
   scale_fill_distiller(palette = "RdYlBu") +
   scale_y_discrete(limits = rev) +
-  labs(x = "Food type", y = "Toxin class", 
+  labs(x = "Food type", y = NULL, 
        caption = "Numbers are counts of detections; colors are based on normalized counts") +
   geom_text(aes(label = n), color = "black") +
   theme(legend.position = "none")
   
-  
+ggsave(here("output",
+            paste0("heatmap_", as.character(today()), ".png")))  
