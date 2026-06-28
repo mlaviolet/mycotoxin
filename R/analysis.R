@@ -35,7 +35,7 @@ number_toxins <- main_data |>
 # distribution of number of toxins
 number_toxins |> 
   count(n_toxins)
-
+# 103 of 118 have at least one detected
 # 45 of 118 have two toxins or fewer
 
 range(number_toxins$n_toxins)
@@ -60,6 +60,7 @@ epitools::binom.wilson(x, n)
 # 1 103 118  0.8728814 0.800821 0.9214291       0.95
 
 # by product type ---------------------------------------------------------
+# food categories having at least one toxin
 by_food_type <- number_toxins |> 
   inner_join(products) |> 
   group_by(Food_type) |> 
@@ -122,8 +123,8 @@ toxin_grouped <- main_data |>
 # QUANTIFIED OR DETECTED? #####################
 # redo factor levels to group similar toxins and collapse less frequent
 work_data <- main_data |> 
-  # filter(amount > 0) |>             # QUANTIFIED
-  filter(detected == "Detected") |>   # DETECTED
+  filter(amount > 0) |>             # QUANTIFIED
+  # filter(detected == "Detected") |>   # DETECTED
   # collapse trichothecene and difuranocoumarin groups
   mutate(
     toxin_grp = 
@@ -134,10 +135,8 @@ work_data <- main_data |>
         Difuranocoumarin = c("Difuranocoumarin",
                              "Difuranocoumarin xanthone precursor to aflatoxin")
              )) |> 
-
   # keep top 5 groups and collapse others
-  mutate(toxin_grp = fct_lump_n(toxin_grp, 5)) |> 
-  select(ID, toxin_grp) 
+  mutate(toxin_grp = fct_lump_n(toxin_grp, 5))
 
 # labels of groups with individual toxins
 toxin_grp_lbl <-
@@ -186,12 +185,20 @@ x <- work_data |>
   arrange(-n) |> 
   print(n = Inf)
 
-ft <- xtabs(~ toxin_grp + Food_type, data = subset(work_data, amount > 0))|> 
+ft <- xtabs(~ toxin_grp + Food_type, data = work_data)|> 
+# ft <- xtabs(~ toxin_grp + Food_type, data = subset(work_data, amount > 0))|> 
   epitools::table.margins() |> 
   as_tibble(rownames = "Toxin") |> 
   flextable::flextable()  |> 
-  add_header_row(values = "Food", colwidths = 9) |> 
+  # add_header_row(values = "Food", colwidths = 9) |> 
   align(i = 1, j = NULL, align = "center", part = "header")
+save_as_docx(ft, 
+             path = here("output",
+             paste0("table_food-by-toxin_",
+                           as.character(today()),
+                           ".docx")))
+
+
 # https://rdrr.io/cran/flextable/man/align.html  
 # use save_as_docx() to save to Word  
 # save_as_docx(ft, path = here("output", "table_food-by-toxin.docx"))
