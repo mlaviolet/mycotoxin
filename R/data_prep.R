@@ -85,6 +85,20 @@ main_data <-
   mutate(across(c(Food_type, toxin_type), factor)) |> 
   # change "Miscellaneous" food type to "Other" so it appears last
   mutate(Food_type = fct_other(Food_type, drop = "Miscellaneous")) |> 
+  filter(amount > 0) |>             # QUANTIFIED
+  # filter(detected == "Detected") |>   # DETECTED
+  # collapse trichothecene and difuranocoumarin groups
+  mutate(
+    toxin_grp = 
+      fct_collapse(
+        toxin_type,
+        Trichothecene = c("Trichothecene Type A", 
+                          "Trichothecene Type B"),
+        Difuranocoumarin = c("Difuranocoumarin",
+                             "Difuranocoumarin xanthone precursor to aflatoxin")
+      )) |> 
+  # keep top 5 groups and collapse others
+  mutate(toxin_grp = fct_lump_n(toxin_grp, 5)) |> 
   arrange(ID)
 
 detect_df <- 
@@ -110,21 +124,19 @@ detect_df <-
          toxin_abb = str_replace(toxin_abb, "Sterig", "STC"),
          toxin_abb = str_replace(toxin_abb, "ALT", "AOH"),
          toxin_abb = str_replace(toxin_abb, "NEOS", "NEO"),
-         toxin_abb = str_replace(toxin_abb, "ZONE", "ZEA")
-  ) |> 
+         toxin_abb = str_replace(toxin_abb, "ZONE", "ZEA")) |> 
   mutate(detected = factor(detected))
 
 main_data <- main_data |> 
   inner_join(detect_df, by = c("ID", "toxin_abb")) |> 
-  arrange(ID, toxin_abb) |> 
-  select(c(1,2,5,3,8,4,7,6))
+  arrange(ID, toxin_abb) 
 rm(detect_df)
 
 # save data in .Rdata and .xlsx formats -----------------------------------
 # .Rdata format
-# save(main_data, products, toxins,
-#      file = here("data",
-#                  paste0("toxin_data_", as.character(today()), ".Rdata")))
+save(main_data, products, toxins,
+     file = here("data",
+                 paste0("toxin_data_", as.character(today()), ".Rdata")))
 # # Excel format
 # writexl::write_xlsx(
 #   main_data,
