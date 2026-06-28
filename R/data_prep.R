@@ -111,10 +111,14 @@ detect_df <-
          toxin_abb = str_replace(toxin_abb, "ALT", "AOH"),
          toxin_abb = str_replace(toxin_abb, "NEOS", "NEO"),
          toxin_abb = str_replace(toxin_abb, "ZONE", "ZEA")
-  )
+  ) |> 
+  mutate(detected = factor(detected))
 
 main_data <- main_data |> 
-  inner_join(detect_df, by = c("ID", "toxin_abb"))
+  inner_join(detect_df, by = c("ID", "toxin_abb")) |> 
+  arrange(ID, toxin_abb) |> 
+  select(c(1,2,5,3,8,4,7,6))
+rm(detect_df)
 
 # save data in .Rdata and .xlsx formats -----------------------------------
 # .Rdata format
@@ -127,6 +131,10 @@ main_data <- main_data |>
 #   path = here("data",
 #               paste0("working_data_", as.character(today()), ".xlsx")
 #               ))
+# .rds format
+# saveRDS(main_data,
+#      file = here("data",
+#                  paste0("toxin_data_", as.character(today()), ".rds")))
 
 # OK TO HERE --------------------------------------------------------------
 
