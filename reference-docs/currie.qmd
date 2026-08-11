@@ -1,0 +1,23 @@
+---
+title: "Currie"
+format: html
+editor: visual
+bibliography: references.bib
+---
+
+## Search term “currie 1968”
+
+In analytical chemistry, "Currie 1968" refers to the seminal paper by Lloyd A. Currie published in Analytical Chemistry, which established the internationally accepted statistical definitions for the critical level (decision limit) and the limit of detection (LOD).
+
+Lloyd Currie worked at the National Bureau of Standards. He used statistical hypothesis testing to clear up confusion in science regarding when a substance is truly detected.
+
+Critical Value $L_C$: The signal level above which a result is considered a true detection (avoiding false positives, or Type I errors).
+
+Detection Limit $L_D$: The true net signal level that you can reliably detect with a set probability of avoiding false negatives (Type II errors).
+
+Quantification (or Quantitation) Limit $L_Q$: The level where quantitative measurement becomes precise and reliable.
+
+[@hurtgen2000]
+
+[@currie1968]
+
